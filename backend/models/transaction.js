@@ -9,9 +9,37 @@
  */
 
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
+const path = require('path');
 
 // In-memory store
 const transactions = new Map();
+
+// Persistence file
+const STORAGE_FILE = path.join(__dirname, '../../.fafnir-transactions.json');
+
+function loadFromDisk() {
+  try {
+    if (fs.existsSync(STORAGE_FILE)) {
+      const data = JSON.parse(fs.readFileSync(STORAGE_FILE, 'utf8'));
+      data.forEach(tx => transactions.set(tx.id, tx));
+      console.log(`  Loaded ${data.length} transactions from disk`);
+    }
+  } catch (err) {
+    console.error('Error loading transactions:', err.message);
+  }
+}
+
+function saveToDisk() {
+  try {
+    const data = Array.from(transactions.values());
+    fs.writeFileSync(STORAGE_FILE, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error('Error saving transactions:', err.message);
+  }
+}
+
+loadFromDisk();
 
 /**
  * Record a transaction.
@@ -30,6 +58,7 @@ function create(data) {
   };
 
   transactions.set(tx.id, tx);
+  saveToDisk();
   return tx;
 }
 

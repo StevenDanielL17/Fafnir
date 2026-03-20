@@ -9,9 +9,40 @@
  */
 
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
+const path = require('path');
 
 // In-memory store (replaced by PostgreSQL in Week 3)
 const users = new Map();
+
+// Simple persistence file
+const STORAGE_FILE = path.join(__dirname, '../../.fafnir-users.json');
+
+// Load users from disk on startup
+function loadFromDisk() {
+  try {
+    if (fs.existsSync(STORAGE_FILE)) {
+      const data = JSON.parse(fs.readFileSync(STORAGE_FILE, 'utf8'));
+      data.forEach(user => users.set(user.id, user));
+      console.log(`  Loaded ${data.length} users from disk`);
+    }
+  } catch (err) {
+    console.error('Error loading users:', err.message);
+  }
+}
+
+// Save users to disk
+function saveToDisk() {
+  try {
+    const data = Array.from(users.values());
+    fs.writeFileSync(STORAGE_FILE, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error('Error saving users:', err.message);
+  }
+}
+
+// Auto-load on require
+loadFromDisk();
 
 /**
  * Create a new user.
@@ -30,6 +61,7 @@ function create(data) {
   };
 
   users.set(user.id, user);
+  saveToDisk();
   return user;
 }
 
@@ -65,6 +97,7 @@ function update(id, data) {
   if (!user) return null;
 
   Object.assign(user, data);
+  saveToDisk();
   return user;
 }
 
@@ -72,7 +105,9 @@ function update(id, data) {
  * Delete user.
  */
 function remove(id) {
-  return users.delete(id);
+  const result = users.delete(id);
+  if (result) saveToDisk();
+  return result;
 }
 
 // ── EXPORTS ────────────────────────────────────────────

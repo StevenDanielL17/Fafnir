@@ -21,3 +21,14 @@ Thumbs.db
 # Debug
 npm-debug.log*
 yarn-debug.log*
+
+# Ignore txt and md files except README
+*.txt
+*.md
+!README.md
+!SPECIFICATION.md
+
+# Local persistence (dev only - use DB in production)
+.fafnir-users.json
+.fafnir-rules.json
+.fafnir-transactions.json

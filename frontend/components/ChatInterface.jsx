@@ -123,7 +123,7 @@ export default function ChatInterface({ token, onNewRule }) {
               }`}
             >
               {msg.role === 'assistant' && (
-                <div className="text-fafnir-gold text-xs font-semibold mb-1">🐉 Fafnir</div>
+                <div className="text-fafnir-gold text-xs font-semibold mb-1 flex items-center gap-1"><img src="/fafnir-logo.png" alt="" className="w-4 h-4 rounded-full inline" /> Fafnir</div>
               )}
               {msg.content}
             </div>

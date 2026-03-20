@@ -20,7 +20,7 @@ export default function CTAFooter() {
 
         <ScrollReveal delay={0.4}>
           <a
-            href="/dashboard"
+            href="/signup"
             className="inline-block bg-fafnir-green text-fafnir-black font-bold px-10 py-5 rounded-full text-lg hover:shadow-[0_0_40px_rgba(0,200,150,0.5)] hover:-translate-y-1 transition-all"
           >
             Start Saving Free

@@ -16,7 +16,7 @@ export default function PhoneMockup() {
               >
                 <div className="bg-fafnir-black rounded-[24px] p-5 min-h-[480px] flex flex-col justify-center relative z-10">
                   <div className="text-center">
-                    <span className="text-4xl mb-4 block">🐉</span>
+                    <img src="/fafnir-logo.png" alt="Fafnir" className="w-16 h-16 rounded-full mx-auto mb-4" />
                     <h4 className="font-display text-xl text-fafnir-text mb-2">
                       What&apos;s your savings goal?
                     </h4>

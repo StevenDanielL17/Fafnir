@@ -30,7 +30,7 @@ export default function Hero() {
       {/* ── Nav ── */}
       <nav className="relative z-20 flex items-center justify-between px-6 md:px-12 py-5">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">🐉</span>
+          <img src="/fafnir-logo.png" alt="Fafnir" className="w-8 h-8 rounded-full" />
           <span className="text-xl font-bold text-fafnir-text tracking-[0.15em]">FAFNIR</span>
         </div>
         <div className="hidden md:flex items-center gap-8 text-sm text-fafnir-muted">
@@ -39,7 +39,7 @@ export default function Hero() {
           <a href="#security" className="hover:text-fafnir-text transition-colors">Security</a>
         </div>
         <a
-          href="/dashboard"
+          href="/signup"
           className="liquid-glass liquid-glass-green px-5 py-2 text-sm font-medium text-fafnir-green hover:text-fafnir-green-light transition-colors relative z-10"
         >
           Start Saving
@@ -104,7 +104,7 @@ export default function Hero() {
           className="flex flex-col items-center gap-4"
         >
           <a
-            href="/dashboard"
+            href="/signup"
             className="bg-fafnir-green text-fafnir-black font-semibold px-8 py-4 rounded-full text-lg hover:shadow-[0_0_30px_rgba(0,200,150,0.4)] hover:-translate-y-0.5 transition-all"
           >
             Start for Free

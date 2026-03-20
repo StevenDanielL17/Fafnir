@@ -197,6 +197,60 @@ function subscribeTopic(topicId, onMessage) {
     });
 }
 
+// ── SAFE HCS LOGGING (never throws) ────────────────────
+
+/**
+ * Log a JSON message to a user's HCS topic.
+ * Wraps submitLog in try/catch — never throws.
+ * 
+ * @param {string} topicId - The user's HCS topic ID
+ * @param {object} message - Any JSON-serializable object
+ * @returns {number|null} Sequence number, or null on failure
+ */
+async function logToHCS(topicId, message) {
+  try {
+    // Race against a 10s timeout so HCS never blocks the caller
+    const result = await Promise.race([
+      submitLog(topicId, message),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('HCS timeout')), 10000)),
+    ]);
+    return result.sequenceNumber;
+  } catch (err) {
+    console.error(`  logToHCS error (topic ${topicId}):`, err.message);
+    return null;
+  }
+}
+
+// ── SAVINGS TRANSFER (signed with user key) ────────────
+
+/**
+ * Transfer HBAR from a user account to the vault.
+ * Signs the transaction with the user's private key.
+ * 
+ * @param {string} fromAccountId - User's Hedera account
+ * @param {string} fromPrivateKey - User's private key (DER string)
+ * @param {string} toAccountId - Vault account
+ * @param {number} amountHbar - Amount to transfer
+ * @returns {{ status: string, transactionId: string }}
+ */
+async function executeSavingsTransfer(fromAccountId, fromPrivateKey, toAccountId, amountHbar) {
+  const userKey = PrivateKey.fromStringDer(fromPrivateKey);
+
+  const tx = new TransferTransaction()
+    .addHbarTransfer(fromAccountId, new Hbar(-amountHbar))
+    .addHbarTransfer(toAccountId, new Hbar(amountHbar))
+    .freezeWith(client);
+
+  const signedTx = await tx.sign(userKey);
+  const response = await signedTx.execute(client);
+  const receipt = await response.getReceipt(client);
+
+  return {
+    status: receipt.status.toString(),
+    transactionId: response.transactionId.toString(),
+  };
+}
+
 // ── EXPORTS ────────────────────────────────────────────
 
 module.exports = {
@@ -210,5 +264,8 @@ module.exports = {
   // HCS
   createTopic,
   submitLog,
+  logToHCS,
   subscribeTopic,
+  // Savings
+  executeSavingsTransfer,
 };

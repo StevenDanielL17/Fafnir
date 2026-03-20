@@ -1,0 +1,279 @@
+
+> fafnir-tests@1.0.0 test
+> vitest run --reporter=verbose
+
+
+ RUN  v3.2.4 /home/stevendaniell/BackUp/Dan/dansprojects/Fafnir/fafnir-tests
+
+ ✓ unit/services/schedulerService.test.js > Scheduler Service > start() > starts the scheduler without throwing 7ms
+ ✓ unit/services/schedulerService.test.js > Scheduler Service > stop() > stops a running scheduler 2ms
+ ✓ unit/services/schedulerService.test.js > Scheduler Service > stop() > handles stop when not started 2ms
+ ✓ unit/services/schedulerService.test.js > Scheduler Service > triggerNow() > runs a manual cycle without errors 2ms
+ ✓ unit/services/schedulerService.test.js > Scheduler Service > interval execution > calls runCycle for each user with rules on interval tick 5ms
+ ✓ unit/routes/index.test.js > Backend Entry Point — Health & Startup > /api/health > returns status ok 3ms
+ ✓ unit/routes/index.test.js > Backend Entry Point — Health & Startup > /api/health > returns service name 0ms
+ ✓ unit/routes/index.test.js > Backend Entry Point — Health & Startup > /api/health > returns a valid timestamp 0ms
+ ✓ unit/routes/index.test.js > Backend Entry Point — Health & Startup > /api/health > returns hedera config from env 1ms
+ ✓ unit/routes/index.test.js > Backend Entry Point — Health & Startup > /api/health > defaults network to testnet 0ms
+ ✓ unit/routes/index.test.js > Backend Entry Point — Health & Startup > /api/health > defaults operatorId to "not configured" 0ms
+ ✓ unit/routes/index.test.js > Backend Entry Point — Health & Startup > startup sequence > initializes in correct order: hedera → langchain → scheduler 3ms
+ ✓ unit/routes/index.test.js > Backend Entry Point — Health & Startup > startup sequence > continues when LLM is unavailable 1ms
+ ✓ unit/routes/index.test.js > Backend Entry Point — Health & Startup > startup sequence > calls each service exactly once 2ms
+ ✓ unit/routes/index.test.js > Backend Entry Point — Health & Startup > route mounting contract > all required route paths are defined 1ms
+ ✓ unit/routes/index.test.js > Backend Entry Point — Health & Startup > route mounting contract > health endpoint is at /api/health 0ms
+ ✓ security/authBypass.test.js > Security: Auth Bypass > JWT Validation > valid token decodes correctly 8ms
+ ✓ security/authBypass.test.js > Security: Auth Bypass > JWT Validation > rejects expired token 3ms
+ ✓ security/authBypass.test.js > Security: Auth Bypass > JWT Validation > rejects token with wrong secret 1ms
+ ✓ security/authBypass.test.js > Security: Auth Bypass > JWT Validation > rejects tampered token 1ms
+ ✓ security/authBypass.test.js > Security: Auth Bypass > JWT Validation > rejects completely invalid token strings 1ms
+ ✓ security/authBypass.test.js > Security: Auth Bypass > JWT Validation > token contains only userId (never sensitive data) 2ms
+ ✓ security/ruleInjection.test.js > Security: Rule Injection > Amount Manipulation > should handle negative amounts (potential theft vector) 3ms
+ ✓ security/ruleInjection.test.js > Security: Rule Injection > Amount Manipulation > should handle zero amounts 0ms
+ ✓ security/ruleInjection.test.js > Security: Rule Injection > Amount Manipulation > should handle absurdly large amounts 0ms
+ ✓ security/ruleInjection.test.js > Security: Rule Injection > Amount Manipulation > should handle floating point precision attacks 1ms
+ ✓ security/ruleInjection.test.js > Security: Rule Injection > String Injection > handles SQL injection in description 1ms
+ ✓ security/ruleInjection.test.js > Security: Rule Injection > String Injection > handles XSS in description 2ms
+ ✓ security/ruleInjection.test.js > Security: Rule Injection > String Injection > handles unicode in trigger values 2ms
+ ✓ security/ruleInjection.test.js > Security: Rule Injection > String Injection > handles extremely long descriptions 2ms
+ ✓ security/ruleInjection.test.js > Security: Rule Injection > Type Confusion > handles string passed as amount 4ms
+ ✓ security/ruleInjection.test.js > Security: Rule Injection > Type Confusion > handles NaN amount 0ms
+ ✓ security/ruleInjection.test.js > Security: Rule Injection > Type Confusion > handles Infinity amount 1ms
+ ✓ financial/refundGuard.test.js > Financial: Refund Guard > allows transfer FROM user TO vault (normal save) 4ms
+ ✓ financial/refundGuard.test.js > Financial: Refund Guard > DETECTS unauthorized transfer FROM vault TO user 1ms
+ ✓ financial/refundGuard.test.js > Financial: Refund Guard > DETECTS partial unauthorized refund 1ms
+ ✓ financial/refundGuard.test.js > Financial: Refund Guard > DETECTS refund disguised as a zero transfer 1ms
+ ✓ financial/refundGuard.test.js > Financial: Refund Guard > authorized refund requires REFUND action in HCS log 2ms
+ ✓ financial/refundGuard.test.js > Financial: Refund Guard > refund amount must not exceed original failed transaction amount 1ms
+ ✓ financial/refundGuard.test.js > Financial: Refund Guard > detects multiple rapid refunds (rate limit violation) 1ms
+ ✓ financial/refundGuard.test.js > Financial: Refund Guard > conservation holds through a full savings cycle 1ms
+ ✓ financial/refundGuard.test.js > Financial: Refund Guard > every transfer has a corresponding HCS log 1ms
+ ✓ financial/refundGuard.test.js > Financial: Refund Guard > DETECTS audit gap (transfer without log) 1ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > Account Creation > creates an account with initial balance 3ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > Account Creation > tracks total supply correctly after account creation 0ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > Account Creation > creates multiple unique accounts 0ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > Balance Queries > returns correct balance for operator 0ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > Balance Queries > throws for non-existent account 2ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > Transfers > transfers HBAR between accounts 1ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > Transfers > preserves total supply after transfer 1ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > Transfers > rejects transfer when balance insufficient 0ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > Transfers > rejects zero or negative transfers 1ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > Transfers > rejects transfer from non-existent account 0ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > Transfers > records transfer in history 1ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > HCS Topics > creates a topic with memo 0ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > HCS Topics > submits messages to a topic 0ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > HCS Topics > increments sequence numbers 0ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > HCS Topics > retrieves all messages from a topic 0ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > HCS Topics > rejects messages to non-existent topic 0ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > Network Freeze > blocks all operations when frozen 1ms
+ ✓ unit/services/hederaService.test.js > Hedera Service — Simulated > Network Freeze > resumes after unfreeze 0ms
+ ✓ financial/limitEnforcement.test.js > Financial: Limit Enforcement > Per-Transaction Limit > caps save amount at maxPerTransaction 8ms
+ ✓ financial/limitEnforcement.test.js > Financial: Limit Enforcement > Per-Transaction Limit > allows full amount when under maxPerTransaction 1ms
+ ✓ financial/limitEnforcement.test.js > Financial: Limit Enforcement > Per-Transaction Limit > per-transaction assertion catches violations 6ms
+ ✓ financial/limitEnforcement.test.js > Financial: Limit Enforcement > Per-Transaction Limit > per-transaction assertion passes when compliant 2ms
+ ✓ financial/limitEnforcement.test.js > Financial: Limit Enforcement > Monthly Cap > stops saving when monthly cap is reached 5ms
+ ✓ financial/limitEnforcement.test.js > Financial: Limit Enforcement > Monthly Cap > monthly assertion catches violations 2ms
+ ✓ financial/limitEnforcement.test.js > Financial: Limit Enforcement > Monthly Cap > monthly cap considers only SAVE actions 1ms
+ ✓ financial/limitEnforcement.test.js > Financial: Limit Enforcement > Combined Limits > respects both per-tx and monthly limits simultaneously 1ms
+ ✓ financial/limitEnforcement.test.js > Financial: Limit Enforcement > Combined Limits > handles edge case: monthly cap exactly equals save amount 1ms
+ ✓ bridge/consensusLogging.test.js > Bridge: Consensus Logging > logs SAVE action after successful transfer 3ms
+ ✓ bridge/consensusLogging.test.js > Bridge: Consensus Logging > every transfer has a corresponding HCS log 1ms
+ ✓ bridge/consensusLogging.test.js > Bridge: Consensus Logging > logs SAVE_FAILED when transfer fails 1ms
+ ✓ bridge/consensusLogging.test.js > Bridge: Consensus Logging > log entries contain all required fields 1ms
+ ✓ bridge/consensusLogging.test.js > Bridge: Consensus Logging > HCS messages are ordered by sequence number 1ms
+ ✓ bridge/consensusLogging.test.js > Bridge: Consensus Logging > each user has their own isolated topic 2ms
+ ✓ financial/auditTrail.test.js > Financial: Audit Trail > complete audit trail passes validation 4ms
+ ✓ financial/auditTrail.test.js > Financial: Audit Trail > DETECTS missing log for a transfer 1ms
+ ✓ financial/auditTrail.test.js > Financial: Audit Trail > audit trail includes RULE_CREATED events 1ms
+ ✓ financial/auditTrail.test.js > Financial: Audit Trail > audit trail includes ACCOUNT_CREATED event 1ms
+ ✓ financial/auditTrail.test.js > Financial: Audit Trail > audit trail preserves chronological order 1ms
+ ✓ financial/auditTrail.test.js > Financial: Audit Trail > failed transactions also have audit entries 1ms
+ ✓ bridge/ruleExecution.test.js > Bridge: Rule Execution Path > completes full save cycle: evaluate → transfer → log → record 5ms
+ ✓ bridge/ruleExecution.test.js > Bridge: Rule Execution Path > skips execution when rule is paused 1ms
+ ✓ bridge/ruleExecution.test.js > Bridge: Rule Execution Path > skips execution when monthly cap would be exceeded 1ms
+ ✓ bridge/ruleExecution.test.js > Bridge: Rule Execution Path > skips execution when balance is insufficient 0ms
+ ✓ bridge/ruleExecution.test.js > Bridge: Rule Execution Path > respects maxPerTransaction limit 1ms
+ ✓ bridge/ruleExecution.test.js > Bridge: Rule Execution Path > executes multiple rules in sequence for one user 1ms
+ ✓ bridge/ruleExecution.test.js > Bridge: Rule Execution Path > continues processing remaining rules when one fails 1ms
+ ✓ bridge/endToEnd.test.js > Bridge: End-to-End User Flow > completes full demo flow: signup → goal → save → query 5ms
+ ✓ bridge/endToEnd.test.js > Bridge: End-to-End User Flow > handles a full month of automated savings 1ms
+ ✓ bridge/endToEnd.test.js > Bridge: End-to-End User Flow > multiple users can save simultaneously without interference 2ms
+ ✓ financial/errorRecovery.test.js > Financial: Error Recovery > Transfer Failure > logs SAVE_FAILED when transfer fails due to insufficient balance 5ms
+ ✓ financial/errorRecovery.test.js > Financial: Error Recovery > Transfer Failure > does NOT retry failed transfers automatically 2ms
+ ✓ financial/errorRecovery.test.js > Financial: Error Recovery > Transfer Failure > continues processing other rules after one fails 1ms
+ ✓ financial/errorRecovery.test.js > Financial: Error Recovery > HCS Logging Failure (QUARANTINE) > enters quarantine when HCS fails after successful transfer 1ms
+ ✓ financial/errorRecovery.test.js > Financial: Error Recovery > HCS Logging Failure (QUARANTINE) > recovers from quarantine when HCS retry succeeds 1ms
+ ✓ financial/errorRecovery.test.js > Financial: Error Recovery > Network Failure > handles complete network outage gracefully 0ms
+ ✓ unit/services/notificationService.test.js > Notification Service > send() > creates a notification with all fields 4ms
+ ✓ unit/services/notificationService.test.js > Notification Service > getMessages() > returns all messages for a user 2ms
+ ✓ unit/services/notificationService.test.js > Notification Service > getMessages() > returns most recent first 1ms
+ ✓ unit/services/notificationService.test.js > Notification Service > getMessages() > respects limit option 1ms
+ ✓ unit/services/notificationService.test.js > Notification Service > getMessages() > returns empty array for user with no messages 1ms
+ ✓ unit/services/notificationService.test.js > Notification Service > markRead() > marks a specific message as read 0ms
+ ✓ unit/services/notificationService.test.js > Notification Service > clear() > removes all messages for a user 1ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > POST /api/goals (create) > creates a rule and returns 201 4ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > POST /api/goals (create) > logs RULE_CREATED to HCS 2ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > POST /api/goals (create) > returns 400 when goalText is missing 1ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > POST /api/goals (create) > returns 400 when goalText is undefined 0ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > POST /api/goals/parse (preview) > returns parsed rule without saving 1ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > POST /api/goals/parse (preview) > returns 400 when goalText is missing 0ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > GET /api/goals (list) > returns user rules 1ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > GET /api/goals (list) > returns empty array for user with no rules 0ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > PATCH /api/goals/:id (update) > updates a rule and logs to HCS 2ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > PATCH /api/goals/:id (update) > returns 404 for non-existent rule 1ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > PATCH /api/goals/:id (update) > returns 403 when user does not own the rule 1ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > DELETE /api/goals/:id (remove) > deletes a rule and logs to HCS 1ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > DELETE /api/goals/:id (remove) > returns 404 for non-existent rule 0ms
+ ✓ unit/routes/goals.test.js > Goals Route — CRUD + HCS Logging > DELETE /api/goals/:id (remove) > returns 403 when user does not own the rule 1ms
+ ✓ financial/balanceInvariant.test.js > Financial: Balance Invariant > total supply is constant after any transfer 8ms
+ ✓ financial/balanceInvariant.test.js > Financial: Balance Invariant > detects supply creation (money appearing from nowhere) 5ms
+ ✓ financial/balanceInvariant.test.js > Financial: Balance Invariant > detects supply destruction (money disappearing) 2ms
+ ✓ financial/balanceInvariant.test.js > Financial: Balance Invariant > detects negative balance creation 1ms
+ ✓ financial/balanceInvariant.test.js > Financial: Balance Invariant > invariant holds through 100 random-amount transfers 3ms
+ ✓ financial/balanceInvariant.test.js > Financial: Balance Invariant > invariant checker wraps async operations 1ms
+ ✓ bridge/tokenTransfer.test.js > Bridge: Token Transfer Integrity > transfers exact amount from user to vault 3ms
+ ✓ bridge/tokenTransfer.test.js > Bridge: Token Transfer Integrity > preserves total supply across multiple transfers 1ms
+ ✓ bridge/tokenTransfer.test.js > Bridge: Token Transfer Integrity > rejects transfer when user has insufficient balance 2ms
+ ✓ bridge/tokenTransfer.test.js > Bridge: Token Transfer Integrity > handles multiple users saving to the same vault 1ms
+ ✓ bridge/tokenTransfer.test.js > Bridge: Token Transfer Integrity > correctly tracks transfer history per account 2ms
+ ✓ bridge/tokenTransfer.test.js > Bridge: Token Transfer Integrity > transfer record contains all required fields 1ms
+ ✓ bridge/tokenTransfer.test.js > Bridge: Token Transfer Integrity > handles rapid successive transfers correctly 0ms
+ ✓ bridge/tokenTransfer.test.js > Bridge: Token Transfer Integrity > balance never goes negative during transfers 1ms
+ ✓ unit/models/user.test.js > User Model > create() > creates a user with all required fields 10ms
+ ✓ unit/models/user.test.js > User Model > create() > generates unique IDs for each user 3ms
+ ✓ unit/models/user.test.js > User Model > create() > allows null for optional fields 1ms
+ ✓ unit/models/user.test.js > User Model > create() > NEVER exposes hederaPrivateKey to response objects without explicit access 2ms
+ ✓ unit/models/user.test.js > User Model > getByEmail() > finds an existing user by email 1ms
+ ✓ unit/models/user.test.js > User Model > getByEmail() > returns null for non-existent email 1ms
+ ✓ unit/models/user.test.js > User Model > getById() > finds an existing user by ID 1ms
+ ✓ unit/models/user.test.js > User Model > getById() > returns null for non-existent ID 0ms
+ ✓ unit/models/user.test.js > User Model > getAll() > returns all created users 5ms
+ ✓ unit/models/user.test.js > User Model > getAll() > returns empty array when no users exist 1ms
+ ✓ unit/models/user.test.js > User Model > update() > updates user fields 1ms
+ ✓ unit/models/user.test.js > User Model > update() > returns null when updating non-existent user 0ms
+ ✓ unit/models/user.test.js > User Model > remove() > deletes a user 1ms
+ ✓ financial/doubleSave.test.js > Financial: Double-Save Prevention > allows saves from different rules at the same time 10ms
+ ✓ financial/doubleSave.test.js > Financial: Double-Save Prevention > DETECTS same rule firing twice within 60 seconds 2ms
+ ✓ financial/doubleSave.test.js > Financial: Double-Save Prevention > allows same rule to fire after 60-second window 2ms
+ ✓ financial/doubleSave.test.js > Financial: Double-Save Prevention > DETECTS triple-fire within window 1ms
+ ✓ financial/doubleSave.test.js > Financial: Double-Save Prevention > ignores SAVE_FAILED in dedup check 2ms
+ ✓ financial/doubleSave.test.js > Financial: Double-Save Prevention > handles empty transaction list 1ms
+ ✓ financial/doubleSave.test.js > Financial: Double-Save Prevention > handles single transaction 1ms
+ ✓ unit/services/holService.test.js > HOL Service — Placeholder > registerAgent() > returns registered: false (placeholder) 2ms
+ ✓ unit/services/holService.test.js > HOL Service — Placeholder > registerAgent() > includes a note about future implementation 1ms
+ ✓ unit/services/holService.test.js > HOL Service — Placeholder > registerAgent() > does not throw 1ms
+ ✓ unit/services/holService.test.js > HOL Service — Placeholder > checkRegistration() > returns registered: false 0ms
+ ✓ unit/services/holService.test.js > HOL Service — Placeholder > checkRegistration() > does not throw 1ms
+ ✓ unit/services/holService.test.js > HOL Service — Placeholder > independence > HOL service has no dependencies on other services 0ms
+ ✓ security/keyExposure.test.js > Security: Key Exposure > API Response Sanitization > signup response does not contain private key 3ms
+ ✓ security/keyExposure.test.js > Security: Key Exposure > API Response Sanitization > user /me endpoint does not expose keys 1ms
+ ✓ security/keyExposure.test.js > Security: Key Exposure > API Response Sanitization > history endpoint does not contain keys 0ms
+ ✓ security/keyExposure.test.js > Security: Key Exposure > JWT Token Safety > JWT payload contains only userId 5ms
+ ✓ security/keyExposure.test.js > Security: Key Exposure > Error Message Safety > error messages do not leak private keys 1ms
+ ✓ security/keyExposure.test.js > Security: Key Exposure > Error Message Safety > stack traces do not contain keys 7ms
+ ✓ security/keyExposure.test.js > Security: Key Exposure > Environment Variable Safety > .env.test uses only fake credentials 1ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — extractAction() > extracts create_goal from [GOAL_JSON] tag 5ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — extractAction() > extracts pause_rule from [PAUSE_RULE] tag 1ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — extractAction() > extracts resume_rule from [RESUME_RULE] tag 0ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — extractAction() > extracts update_rule with JSON payload 1ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — extractAction() > returns null when no action tag found 1ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — extractAction() > returns null when UPDATE_RULE has invalid JSON 1ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — cleanReply() > strips [GOAL_JSON] tag from reply 1ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — cleanReply() > strips [PAUSE_RULE] tag 1ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — cleanReply() > strips [RESUME_RULE] tag 1ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — cleanReply() > strips [UPDATE_RULE] tag 0ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — cleanReply() > returns full text when no tags present 0ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — buildContextSummary() > includes totalSaved 1ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — buildContextSummary() > includes monthlyTotal 0ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — buildContextSummary() > includes balance in HBAR 0ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — buildContextSummary() > lists active rules 1ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — buildContextSummary() > shows "No active savings rules" when empty 0ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — buildContextSummary() > lists recent transactions 0ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — buildContextSummary() > shows "No recent transactions" when empty 0ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — buildContextSummary() > limits recent transactions to 5 0ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — Unavailable Mode > isAvailable() returns false 0ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — Unavailable Mode > parseGoalWithLLM() returns null 0ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — Unavailable Mode > evaluateRuleWithLLM() returns null 0ms
+ ✓ unit/services/langchainAgent.test.js > LangChain Agent — Unavailable Mode > chat() returns basic mode fallback message 0ms
+ ✓ chaos/partialFailure.test.js > Chaos: Partial Failure > detects transfer-success + log-failure state 4ms
+ ✓ chaos/partialFailure.test.js > Chaos: Partial Failure > quarantine prevents further operations until resolved 1ms
+ ✓ chaos/partialFailure.test.js > Chaos: Partial Failure > multiple partial failures are all tracked 1ms
+ ✓ bridge/accountCreation.test.js > Bridge: Account Creation > creates a Hedera account with initial balance on signup 8ms
+ ✓ bridge/accountCreation.test.js > Bridge: Account Creation > creates an HCS topic for the new user 1ms
+ ✓ bridge/accountCreation.test.js > Bridge: Account Creation > logs ACCOUNT_CREATED as the first HCS message 1ms
+ ✓ bridge/accountCreation.test.js > Bridge: Account Creation > each user gets a unique Hedera account 0ms
+ ✓ bridge/accountCreation.test.js > Bridge: Account Creation > each user gets a unique HCS topic 0ms
+ ✓ bridge/accountCreation.test.js > Bridge: Account Creation > account response contains accountId but NEVER private key in user-facing data 1ms
+ ✓ bridge/accountCreation.test.js > Bridge: Account Creation > handles account creation failure gracefully 2ms
+ ✓ unit/services/agentService.test.js > Agent Service — Goal Parsing (Keyword Fallback) > parseGoal() — spending category triggers > parses "Save $5 whenever I spend on food" 3ms
+ ✓ unit/services/agentService.test.js > Agent Service — Goal Parsing (Keyword Fallback) > parseGoal() — spending category triggers > parses coffee spending trigger 1ms
+ ✓ unit/services/agentService.test.js > Agent Service — Goal Parsing (Keyword Fallback) > parseGoal() — spending category triggers > extracts monthly max 0ms
+ ✓ unit/services/agentService.test.js > Agent Service — Goal Parsing (Keyword Fallback) > parseGoal() — spending category triggers > extracts per-transaction limit 1ms
+ ✓ unit/services/agentService.test.js > Agent Service — Goal Parsing (Keyword Fallback) > parseGoal() — scheduled triggers > parses weekly schedule 0ms
+ ✓ unit/services/agentService.test.js > Agent Service — Goal Parsing (Keyword Fallback) > parseGoal() — scheduled triggers > parses daily schedule 0ms
+ ✓ unit/services/agentService.test.js > Agent Service — Goal Parsing (Keyword Fallback) > parseGoal() — scheduled triggers > parses monthly schedule 0ms
+ ✓ unit/services/agentService.test.js > Agent Service — Goal Parsing (Keyword Fallback) > parseGoal() — scheduled triggers > parses hourly schedule 0ms
+ ✓ unit/services/agentService.test.js > Agent Service — Goal Parsing (Keyword Fallback) > parseGoal() — defaults > defaults to $5 when no amount specified 0ms
+ ✓ unit/services/agentService.test.js > Agent Service — Goal Parsing (Keyword Fallback) > parseGoal() — defaults > defaults maxPerTransaction to amount 0ms
+ ✓ unit/services/agentService.test.js > Agent Service — Goal Parsing (Keyword Fallback) > parseGoal() — defaults > defaults monthlyMax to amount * 30 0ms
+ ✓ unit/services/agentService.test.js > Agent Service — Goal Parsing (Keyword Fallback) > parseGoal() — defaults > always sets isActive to true 0ms
+ ✓ unit/services/agentService.test.js > Agent Service — Rule Evaluation (Fallback) > executes when all conditions are met 0ms
+ ✓ unit/services/agentService.test.js > Agent Service — Rule Evaluation (Fallback) > rejects when monthly cap is reached 0ms
+ ✓ unit/services/agentService.test.js > Agent Service — Rule Evaluation (Fallback) > rejects when balance is too low 0ms
+ ✓ unit/services/agentService.test.js > Agent Service — Rule Evaluation (Fallback) > rejects when rule is paused 0ms
+ ✓ unit/services/agentService.test.js > Agent Service — Rule Evaluation (Fallback) > respects maxPerTransaction limit 0ms
+ ✓ unit/routes/history.test.js > History Route — Queries + Notifications > GET /api/history > returns transactions for a user 7ms
+ ✓ unit/routes/history.test.js > History Route — Queries + Notifications > GET /api/history > respects limit parameter 1ms
+ ✓ unit/routes/history.test.js > History Route — Queries + Notifications > GET /api/history > defaults to limit 50 1ms
+ ✓ unit/routes/history.test.js > History Route — Queries + Notifications > GET /api/history > returns empty array for user with no transactions 1ms
+ ✓ unit/routes/history.test.js > History Route — Queries + Notifications > GET /api/history/summary > returns totalSaved, savedThisMonth, and recentActions 1ms
+ ✓ unit/routes/history.test.js > History Route — Queries + Notifications > GET /api/history/summary > returns zeros for new user 1ms
+ ✓ unit/routes/history.test.js > History Route — Queries + Notifications > GET /api/history/summary > limits recentActions to 5 1ms
+ ✓ unit/routes/history.test.js > History Route — Queries + Notifications > GET /api/history/notifications > returns notifications for a user 1ms
+ ✓ unit/routes/history.test.js > History Route — Queries + Notifications > GET /api/history/notifications > respects limit 1ms
+ ✓ unit/routes/history.test.js > History Route — Queries + Notifications > GET /api/history/notifications > returns most recent first 1ms
+ ✓ unit/routes/history.test.js > History Route — Queries + Notifications > POST /api/history/trigger > triggers agent cycle and returns success 1ms
+ ✓ unit/routes/history.test.js > History Route — Queries + Notifications > POST /api/history/trigger > returns 500 when trigger fails 1ms
+ ✓ unit/models/rule.test.js > Rule Model > create() > creates a rule with all fields 3ms
+ ✓ unit/models/rule.test.js > Rule Model > create() > generates unique IDs 1ms
+ ✓ unit/models/rule.test.js > Rule Model > getByUserId() > returns only rules for the specified user 2ms
+ ✓ unit/models/rule.test.js > Rule Model > getByUserId() > returns empty array for user with no rules 0ms
+ ✓ unit/models/rule.test.js > Rule Model > update() > updates specific fields without overwriting others 1ms
+ ✓ unit/models/rule.test.js > Rule Model > toggleActive() > toggles isActive from true to false 0ms
+ ✓ unit/models/rule.test.js > Rule Model > toggleActive() > toggles isActive from false to true 0ms
+ ✓ unit/models/rule.test.js > Rule Model > remove() > removes a rule 0ms
+ ✓ unit/routes/chat.test.js > Chat Route — Action Processing > create_goal > creates a rule from goal text 4ms
+ ✓ unit/routes/chat.test.js > Chat Route — Action Processing > create_goal > logs RULE_CREATED to HCS when user has topic 2ms
+ ✓ unit/routes/chat.test.js > Chat Route — Action Processing > create_goal > skips HCS log when user has no topic 1ms
+ ✓ unit/routes/chat.test.js > Chat Route — Action Processing > pause_rule > pauses a matching active rule 1ms
+ ✓ unit/routes/chat.test.js > Chat Route — Action Processing > pause_rule > returns no_match when no active rule matches keyword 0ms
+ ✓ unit/routes/chat.test.js > Chat Route — Action Processing > resume_rule > resumes a matching paused rule 1ms
+ ✓ unit/routes/chat.test.js > Chat Route — Action Processing > resume_rule > returns no_match when no paused rule matches 0ms
+ ✓ unit/routes/chat.test.js > Chat Route — Action Processing > update_rule > updates a matching rule field 0ms
+ ✓ unit/routes/chat.test.js > Chat Route — Action Processing > update_rule > returns no_match when rule not found 1ms
+ ✓ unit/routes/chat.test.js > Chat Route — Action Processing > update_rule > returns no_match when field or value is missing 0ms
+ ✓ unit/routes/chat.test.js > Chat Route — Action Processing > unknown action > returns null for unrecognized action type 0ms
+ ✓ unit/routes/chat.test.js > Chat Route — Action Processing > input validation > empty message would be caught by route (400) 0ms
+ ✓ unit/models/transaction.test.js > Transaction Model > create() > creates a transaction with all fields 3ms
+ ✓ unit/models/transaction.test.js > Transaction Model > create() > creates a failed transaction 1ms
+ ✓ unit/models/transaction.test.js > Transaction Model > getByUserId() > returns transactions ordered by most recent first 1ms
+ ✓ unit/models/transaction.test.js > Transaction Model > getByUserId() > respects limit option 2ms
+ ✓ unit/models/transaction.test.js > Transaction Model > getByUserId() > returns only specified user transactions 1ms
+ ✓ unit/models/transaction.test.js > Transaction Model > getMonthlyTotal() > sums only SAVE actions for current month 1ms
+ ✓ unit/models/transaction.test.js > Transaction Model > getMonthlyTotal() > returns 0 for user with no transactions 0ms
+ ✓ unit/models/transaction.test.js > Transaction Model > getTotalSaved() > sums all SAVE actions across all time 0ms
+ ✓ unit/models/transaction.test.js > Transaction Model > getTotalSaved() > excludes SAVE_FAILED from totals 0ms
+ ✓ chaos/agentLoop.test.js > Chaos: Agent Loop Prevention > circuit breaker stops after max iterations per cycle 3ms
+ ✓ chaos/agentLoop.test.js > Chaos: Agent Loop Prevention > prevents recursive rule creation from draining funds 2ms
+ ✓ chaos/agentLoop.test.js > Chaos: Agent Loop Prevention > total saves per cycle is bounded regardless of rule count 1ms
+ ✓ chaos/agentLoop.test.js > Chaos: Agent Loop Prevention > handles balance drain without infinite loop 0ms
+ ✓ chaos/agentLoop.test.js > Chaos: Agent Loop Prevention > handles zero-amount rule without infinite loop 0ms
+ ✓ chaos/networkFailure.test.js > Chaos: Network Failure > all operations fail during network freeze 5ms
+ ✓ chaos/networkFailure.test.js > Chaos: Network Failure > state is preserved during outage 1ms
+ ✓ chaos/networkFailure.test.js > Chaos: Network Failure > operations resume normally after recovery 2ms
+ ✓ chaos/networkFailure.test.js > Chaos: Network Failure > handles intermittent failures (freeze/unfreeze cycles) 1ms
+
+ Test Files  30 passed (30)
+      Tests  266 passed (266)
+   Start at  17:16:41
+   Duration  4.78s (transform 313ms, setup 933ms, collect 869ms, tests 589ms, environment 14ms, prepare 3.51s)
+

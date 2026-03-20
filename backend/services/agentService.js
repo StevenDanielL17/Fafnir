@@ -20,6 +20,91 @@ const notificationService = require('./notificationService');
 const langchainAgent = require('./langchainAgent');
 const transactionModel = require('../models/transaction');
 
+const { ChatOpenAI } = require('@langchain/openai');
+const { HumanMessage, SystemMessage } = require('@langchain/core/messages');
+
+const INTENT_PATTERNS = {
+  create_rule: [
+    /add.*rule/i,
+    /new.*rule/i,
+    /create.*rule/i,
+    /start.*sav/i,
+    /set.*sav/i,
+    /save\s*\$/i,
+    /save.*when/i,
+    /save.*every/i,
+    /save.*whenever/i,
+    /save.*max/i,
+    /i want to save/i,
+  ],
+  check_balance: [
+    /how much/i,
+    /what.*saved/i,
+    /my.*balance/i,
+    /total.*saved/i,
+    /savings.*so far/i,
+  ],
+  pause_rule: [
+    /pause/i,
+    /stop.*sav/i,
+    /disable/i,
+  ],
+  resume_rule: [
+    /resume/i,
+    /start.*again/i,
+    /re-?enable/i,
+    /turn on/i,
+  ],
+  show_history: [
+    /history/i,
+    /what.*did you/i,
+    /show.*transactions/i,
+  ],
+};
+
+function detectIntent(message = '') {
+  for (const [intent, patterns] of Object.entries(INTENT_PATTERNS)) {
+    if (patterns.some((pattern) => pattern.test(message))) {
+      return intent;
+    }
+  }
+  return 'general_chat';
+}
+
+async function callLLMWithRetry(model, messages, retries = 2) {
+  const timeoutMs = Number(process.env.LLM_TIMEOUT_MS || 10000);
+
+  for (let i = 0; i <= retries; i += 1) {
+    try {
+      const llmCall = model.invoke(messages);
+      const timeoutCall = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`LLM timeout after ${timeoutMs}ms`)), timeoutMs);
+      });
+      return await Promise.race([llmCall, timeoutCall]);
+    } catch (err) {
+      const errText = String(err && (err.message || err)).toLowerCase();
+      const isAuthFailure =
+        errText.includes('401') ||
+        errText.includes('authentication') ||
+        errText.includes('model_authentication') ||
+        errText.includes('invalid_api_key') ||
+        errText.includes('insufficient_quota');
+
+      if (isAuthFailure) {
+        throw err;
+      }
+
+      const isLastAttempt = i === retries;
+      console.error(`LLM attempt ${i + 1} failed: ${err.message}`);
+      if (isLastAttempt) {
+        throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
+    }
+  }
+  throw new Error('LLM retry loop ended unexpectedly');
+}
+
 // ── INTENT PARSING ─────────────────────────────────────
 
 /**
@@ -249,10 +334,353 @@ async function runCycle(user, rules) {
   }
 }
 
+// ── SPEC-COMPLIANT FUNCTIONS (Tasks 2) ─────────────────
+
+const PARSE_GOAL_SYSTEM = `You are a rule parser for a savings app. 
+Extract saving rules from user messages.
+Return ONLY valid JSON. No markdown. No explanation. No backticks.
+Use this exact format:
+{
+  "trigger_type": "scheduled" or "spending_category",
+  "trigger_value": "daily" or "weekly" or "food" or "transport" etc,
+  "amount": number (how much to save each time),
+  "max_per_transaction": number (same as amount if not specified),
+  "monthly_max": number (amount * 10 if not specified),
+  "description": "plain english summary of the rule"
+}
+If the user mentions a category like food/transport/shopping, 
+use trigger_type: spending_category.
+If they say daily/weekly/every day, use trigger_type: scheduled.`;
+
+const CHAT_SYSTEM = `You are Fafnir, a personal savings agent. 
+You help users save money automatically.
+Rules you must follow:
+- Never mention crypto, blockchain, HBAR, or wallets
+- Always say "savings account" not "wallet"  
+- Always say "saved" not "transferred"
+- Be concise — max 2 sentences per reply
+- When user sets a goal, confirm it clearly
+- When asked about savings, give specific numbers
+- You have access to the user's current context below`;
+
+/**
+ * Parse a user message into a structured savings rule using OpenAI.
+ * 
+ * @param {string} userMessage - e.g. "Save $5 whenever I eat out, max $30 a month"
+ * @returns {object} Parsed rule object with trigger_type, amount, etc.
+ */
+async function parseGoalToRule(userMessage) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    // Fallback to keyword parser
+    return parseGoalKeyword(userMessage);
+  }
+
+  try {
+    const model = new ChatOpenAI({
+      openAIApiKey: apiKey,
+      modelName: 'gpt-4o-mini',
+      temperature: 0.1,
+      maxTokens: 512,
+      maxRetries: 0,
+      ...(process.env.OPENAI_BASE_URL ? { configuration: { baseURL: process.env.OPENAI_BASE_URL } } : {}),
+    });
+
+    const response = await callLLMWithRetry(model, [
+      new SystemMessage(PARSE_GOAL_SYSTEM),
+      new HumanMessage(userMessage),
+    ]);
+
+    let content = response.content.trim();
+    // Strip markdown code fences if present
+    content = content.replace(/^```json?\n?/i, '').replace(/\n?```$/i, '');
+    const parsed = JSON.parse(content);
+
+    return {
+      trigger_type: parsed.trigger_type || 'scheduled',
+      trigger_value: parsed.trigger_value || 'daily',
+      amount: typeof parsed.amount === 'number' ? parsed.amount : 5,
+      max_per_transaction: typeof parsed.max_per_transaction === 'number'
+        ? parsed.max_per_transaction : (parsed.amount || 5),
+      monthly_max: typeof parsed.monthly_max === 'number'
+        ? parsed.monthly_max : (parsed.amount || 5) * 10,
+      description: parsed.description || userMessage,
+    };
+  } catch (err) {
+    console.error('  parseGoalToRule LLM error:', err.message);
+    // Fallback to keyword parser
+    return parseGoalKeyword(userMessage);
+  }
+}
+
+function formatCurrency(value) {
+  return Number(value || 0).toFixed(2);
+}
+
+function buildRuleFallback(rule, message) {
+  const amount = Number(rule.amount || 0);
+  const monthlyMax = Number(rule.monthly_max || rule.monthlyMax || amount * 10);
+  const triggerValue = rule.trigger_value || rule.triggerValue || 'the trigger fires';
+
+  return {
+    trigger_type: rule.trigger_type || rule.triggerType || 'scheduled',
+    trigger_value: triggerValue,
+    amount,
+    max_per_transaction: Number(rule.max_per_transaction || rule.maxPerTransaction || amount),
+    monthly_max: monthlyMax,
+    description: rule.description || message,
+  };
+}
+
+async function handleRuleCreation(message, userContext) {
+  const amountMatches = message.match(/\$?(\d+(?:\.\d+)?)/g);
+  const hasAmount = Boolean(amountMatches && amountMatches.length > 0);
+
+  if (!hasAmount) {
+    return {
+      reply: "Sure, I can set that up. How much should I save each time, and what's your monthly maximum? For example: '$5 per save, max $30/month'",
+      action: 'awaiting_rule_details',
+      rule: null,
+    };
+  }
+
+  const parsed = await parseGoalToRule(message);
+
+  if (!parsed.amount || parsed.amount <= 0) {
+    return {
+      reply: "I couldn't figure out the amount. How much should I save per trigger?",
+      action: 'awaiting_rule_details',
+      rule: null,
+    };
+  }
+
+  const normalizedRule = buildRuleFallback(parsed, message);
+  const triggerText = normalizedRule.trigger_value || 'the condition is met';
+
+  return {
+    reply: `Got it. I'll save $${formatCurrency(normalizedRule.amount)} each time ${triggerText}, up to $${formatCurrency(normalizedRule.monthly_max)}/month. Creating rule now...`,
+    action: 'create_rule',
+    rule: normalizedRule,
+  };
+}
+
+function handleBalanceQuery(userContext) {
+  const totalSaved = formatCurrency(userContext.totalSaved || 0);
+  const monthSaved = formatCurrency(userContext.monthSaved || 0);
+  const activeRules = (userContext.activeRules || []).length;
+
+  return {
+    reply: `You've saved $${totalSaved} total and $${monthSaved} this month. You currently have ${activeRules} active rule${activeRules === 1 ? '' : 's'}.`,
+    action: 'balance_summary',
+  };
+}
+
+function handlePauseIntent(userContext) {
+  const activeRules = (userContext.activeRules || []).length;
+  if (activeRules === 0) {
+    return {
+      reply: 'You do not have any active rules right now. Say "create a new rule" and I can help set one up.',
+      action: 'pause_rule',
+    };
+  }
+
+  return {
+    reply: 'I can pause a rule for you. Tell me which one by name, for example: "pause my food savings rule".',
+    action: 'pause_rule',
+  };
+}
+
+function handleResumeIntent(userContext) {
+  const activeRules = userContext.activeRules || [];
+  if (activeRules.length === 0) {
+    return {
+      reply: 'Which rule should I resume? Say the rule name or say "resume all".',
+      action: 'awaiting_resume_target',
+    };
+  }
+
+  return {
+    reply: 'Tell me which paused rule to resume by name, or say "resume all" if you want everything running again.',
+    action: 'awaiting_resume_target',
+  };
+}
+
+function handleHistoryIntent(userContext) {
+  const recent = userContext.recentTransactions || [];
+  if (recent.length === 0) {
+    return {
+      reply: 'No transactions yet. Once a rule executes, your savings history will show up here.',
+      action: 'show_history',
+    };
+  }
+
+  const summary = recent
+    .slice(0, 3)
+    .map((tx) => `$${formatCurrency(tx.amount)} (${tx.action})`)
+    .join(', ');
+
+  return {
+    reply: `Your latest savings activity: ${summary}.`,
+    action: 'show_history',
+  };
+}
+
+async function handleGeneralChat(message, history, userContext, model) {
+  let activeModel = model;
+  if (!activeModel) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return {
+        reply: "I'm running in basic mode right now. You can still create goals by typing something like: \"Save $5 whenever I spend on food\"",
+        action: 'general_chat',
+      };
+    }
+
+    activeModel = new ChatOpenAI({
+      openAIApiKey: apiKey,
+      modelName: 'gpt-4o-mini',
+      temperature: 0.3,
+      maxTokens: 512,
+      maxRetries: 0,
+      ...(process.env.OPENAI_BASE_URL ? { configuration: { baseURL: process.env.OPENAI_BASE_URL } } : {}),
+    });
+  }
+
+  const contextStr = [
+    `Total saved all-time: $${formatCurrency(userContext.totalSaved || 0)}`,
+    `Saved this month: $${formatCurrency(userContext.monthSaved || 0)}`,
+    `Active rules: ${(userContext.activeRules || []).length}`,
+    ...(userContext.activeRules || []).map(
+      (r, i) => `  ${i + 1}. "${r.description}" - $${r.amount}/save, $${r.monthlyMax}/month`
+    ),
+    `Recent transactions: ${(userContext.recentTransactions || []).length}`,
+  ].join('\n');
+
+  const messages = [
+    new SystemMessage(CHAT_SYSTEM),
+    new SystemMessage(`Current user context:\n${contextStr}`),
+    ...history.map((m) =>
+      m.role === 'user' ? new HumanMessage(m.content) : new SystemMessage(m.content)
+    ),
+    new HumanMessage(message),
+  ];
+
+  try {
+    const response = await callLLMWithRetry(activeModel, messages);
+    return {
+      reply: response.content.trim(),
+      action: 'general_chat',
+    };
+  } catch (err) {
+    console.error('  handleGeneralChat LLM error:', err.message);
+    return {
+      reply: buildChatFallback(userContext),
+      action: 'general_chat',
+    };
+  }
+}
+
+async function handleChat(message, history = [], userContext = {}, model) {
+  const intent = detectIntent(message);
+  console.log(`[Agent] Intent detected: ${intent} for message: "${message}"`);
+
+  switch (intent) {
+    case 'create_rule':
+      return handleRuleCreation(message, userContext);
+    case 'check_balance':
+      return handleBalanceQuery(userContext);
+    case 'pause_rule':
+      return handlePauseIntent(userContext);
+    case 'resume_rule':
+      return handleResumeIntent(userContext);
+    case 'show_history':
+      return handleHistoryIntent(userContext);
+    default:
+      return handleGeneralChat(message, history, userContext, model);
+  }
+}
+
+function buildChatFallback(userContext = {}) {
+  const activeRuleCount = (userContext.activeRules || []).length;
+  if (activeRuleCount === 0) {
+    return "I'm having trouble connecting right now. When I'm back, try: 'Save $5 on food, max $30/month'.";
+  }
+  return `I'm having trouble right now. Your ${activeRuleCount} active rule${activeRuleCount === 1 ? '' : 's'} are still running fine.`;
+}
+
+/**
+ * Chat with Fafnir using OpenAI, context-aware.
+ * 
+ * @param {string} userMessage 
+ * @param {Array<{role: string, content: string}>} conversationHistory 
+ * @param {{ totalSaved: number, monthSaved: number, activeRules: any[], recentTransactions: any[] }} userContext
+ * @returns {string} Agent reply text
+ */
+async function chatWithFafnir(userMessage, conversationHistory = [], userContext = {}) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return "I'm running in basic mode right now. You can still create goals by typing something like: \"Save $5 whenever I spend on food\"";
+  }
+
+  try {
+    const model = new ChatOpenAI({
+      openAIApiKey: apiKey,
+      modelName: 'gpt-4o-mini',
+      temperature: 0.3,
+      maxTokens: 512,
+      maxRetries: 0,
+      ...(process.env.OPENAI_BASE_URL ? { configuration: { baseURL: process.env.OPENAI_BASE_URL } } : {}),
+    });
+
+    const result = await handleChat(userMessage, conversationHistory, userContext, model);
+    return result.reply;
+  } catch (err) {
+    console.error('  chatWithFafnir error:', err.message);
+    return buildChatFallback(userContext);
+  }
+}
+
+/**
+ * Pure logic: decide if a rule should execute given context.
+ * No LLM needed.
+ * 
+ * @param {object} rule 
+ * @param {{ monthlyTotal: number, lastTrigger: Date|null }} context 
+ * @returns {{ execute: boolean, reason: string }}
+ */
+function shouldRuleExecute(rule, context) {
+  // Monthly limit check
+  if (context.monthlyTotal >= (rule.monthly_max || rule.monthlyMax)) {
+    return { execute: false, reason: 'Monthly limit reached' };
+  }
+
+  const lastTrigger = context.lastTrigger ? new Date(context.lastTrigger) : null;
+
+  if (lastTrigger) {
+    const hoursSince = (Date.now() - lastTrigger.getTime()) / (1000 * 60 * 60);
+    const trigType = rule.trigger_type || rule.triggerType;
+    const trigVal = rule.trigger_value || rule.triggerValue;
+
+    if (trigType === 'scheduled' && trigVal === 'daily' && hoursSince < 24) {
+      return { execute: false, reason: 'Not time yet' };
+    }
+    if (trigType === 'scheduled' && trigVal === 'weekly' && hoursSince < 168) {
+      return { execute: false, reason: 'Not time yet' };
+    }
+  }
+
+  return { execute: true, reason: 'Trigger condition met' };
+}
+
 // ── EXPORTS ────────────────────────────────────────────
 
 module.exports = {
   parseGoal,
   evaluateRule,
   runCycle,
+  // Task 2 additions
+  parseGoalToRule,
+  chatWithFafnir,
+  handleChat,
+  shouldRuleExecute,
 };

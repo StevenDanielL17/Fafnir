@@ -4,7 +4,7 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <span className="text-xl">🐉</span>
+          <img src="/fafnir-logo.png" alt="Fafnir" className="w-8 h-8 rounded-full" />
           <div>
             <span className="font-bold text-fafnir-text tracking-[0.1em]">FAFNIR</span>
             <p className="text-xs text-fafnir-muted">

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -11,27 +10,33 @@ function getGreeting() {
 }
 
 export default function DashboardLayout({ children }) {
-  const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentPath, setCurrentPath] = useState('');
+
+  useEffect(() => {
+    setCurrentPath(window.location.pathname);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('fafnir_token');
     const userData = localStorage.getItem('fafnir_user');
 
     if (!token || !userData) {
-      router.push('/');
+      setLoading(false);
+      window.location.replace('/login');
       return;
     }
 
     try {
       setUser(JSON.parse(userData));
     } catch {
-      router.push('/');
+      setLoading(false);
+      window.location.replace('/login');
       return;
     }
     setLoading(false);
-  }, [router]);
+  }, []);
 
   if (loading) {
     return (
@@ -41,25 +46,69 @@ export default function DashboardLayout({ children }) {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-fafnir-black flex items-center justify-center px-6">
+        <div className="liquid-glass p-6 max-w-md text-center">
+          <p className="text-fafnir-text mb-2">Session not available.</p>
+          <p className="text-fafnir-muted text-sm">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
   function handleLogout() {
     localStorage.removeItem('fafnir_token');
     localStorage.removeItem('fafnir_user');
-    router.push('/');
+    window.location.replace('/');
   }
 
   const name = user?.email?.split('@')[0] || 'there';
+  const avatarInitial = name && typeof name === 'string' ? name.charAt(0).toUpperCase() : 'U';
 
   return (
     <div className="min-h-screen bg-fafnir-black flex flex-col">
       {/* ── Top Nav ── */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
         <a href="/" className="flex items-center gap-2">
-          <span className="text-xl">🐉</span>
+          <img src="/fafnir-logo.png" alt="Fafnir" className="w-7 h-7 rounded-full" />
           <span className="text-lg font-bold text-fafnir-text tracking-[0.12em]">FAFNIR</span>
         </a>
 
-        <div className="hidden md:block text-fafnir-text text-sm">
-          Good {getGreeting()}, {name} 👋
+        <div className="hidden md:flex items-center gap-6 text-sm">
+          <a
+            href="/dashboard"
+            className={`transition-colors ${
+              currentPath === '/dashboard'
+                ? 'text-fafnir-green'
+                : 'text-fafnir-muted hover:text-fafnir-text'
+            }`}
+          >
+            Dashboard
+          </a>
+          <a
+            href="/rules"
+            className={`transition-colors ${
+              currentPath === '/rules'
+                ? 'text-fafnir-green'
+                : 'text-fafnir-muted hover:text-fafnir-text'
+            }`}
+          >
+            Rules
+          </a>
+          <a
+            href="/history"
+            className={`transition-colors ${
+              currentPath === '/history'
+                ? 'text-fafnir-green'
+                : 'text-fafnir-muted hover:text-fafnir-text'
+            }`}
+          >
+            History
+          </a>
+          <div className="text-fafnir-muted text-sm">
+            Good {getGreeting()}, {name} 👋
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
@@ -68,7 +117,7 @@ export default function DashboardLayout({ children }) {
             <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-fafnir-green rounded-full" />
           </button>
           <div className="w-8 h-8 rounded-full bg-fafnir-green/20 flex items-center justify-center text-xs text-fafnir-green font-bold uppercase">
-            {name[0]}
+            {avatarInitial}
           </div>
           <button
             onClick={handleLogout}
@@ -87,21 +136,39 @@ export default function DashboardLayout({ children }) {
 
       {/* ── Mobile Bottom Nav ── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 liquid-glass border-t border-white/[0.06] flex justify-around py-3 z-50">
-        <button className="flex flex-col items-center gap-0.5 text-fafnir-green text-[10px]">
+        <a
+          href="/dashboard"
+          className={`flex flex-col items-center gap-0.5 text-[10px] ${
+            currentPath === '/dashboard' ? 'text-fafnir-green' : 'text-fafnir-muted'
+          }`}
+        >
           <span className="text-base">🏠</span>
           Home
-        </button>
-        <button className="flex flex-col items-center gap-0.5 text-fafnir-muted text-[10px]">
+        </a>
+        <a
+          href="/rules"
+          className={`flex flex-col items-center gap-0.5 text-[10px] ${
+            currentPath === '/rules' ? 'text-fafnir-green' : 'text-fafnir-muted'
+          }`}
+        >
           <span className="text-base">📋</span>
           Rules
-        </button>
-        <button className="flex flex-col items-center gap-0.5 text-fafnir-muted text-[10px]">
+        </a>
+        <a
+          href="/history"
+          className={`flex flex-col items-center gap-0.5 text-[10px] ${
+            currentPath === '/history' ? 'text-fafnir-green' : 'text-fafnir-muted'
+          }`}
+        >
           <span className="text-base">📊</span>
           History
-        </button>
-        <button className="flex flex-col items-center gap-0.5 text-fafnir-muted text-[10px]">
+        </a>
+        <button
+          onClick={handleLogout}
+          className="flex flex-col items-center gap-0.5 text-fafnir-muted text-[10px]"
+        >
           <span className="text-base">⚙️</span>
-          Settings
+          Logout
         </button>
       </nav>
     </div>

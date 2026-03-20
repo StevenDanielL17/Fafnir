@@ -4,23 +4,13 @@ import { useState, useRef, useEffect } from 'react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-const DEMO_MESSAGES = [
-  { role: 'user', content: 'Save $5 whenever I eat out, max $30 a month' },
-  {
-    role: 'assistant',
-    content:
-      "Rule created ✓ I'll save $5 each time a food transaction is detected. Monthly limit: $30. Currently saved this month: $23.00",
-  },
-  { role: 'user', content: 'How much have I saved this week?' },
-  {
-    role: 'assistant',
-    content:
-      "This week: $15.00 across 3 saves. You're on track. At this rate you'll hit your monthly cap in 4 days.",
-  },
-];
+const INITIAL_MESSAGE = {
+  role: 'assistant',
+  content: "Hi! I'm Fafnir. Tell me your savings goal and I'll handle everything automatically.",
+};
 
 export default function ChatInterface({ token, onNewRule }) {
-  const [messages, setMessages] = useState(DEMO_MESSAGES);
+  const [messages, setMessages] = useState([INITIAL_MESSAGE]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const scrollRef = useRef(null);
@@ -41,13 +31,25 @@ export default function ChatInterface({ token, onNewRule }) {
     setSending(true);
 
     try {
+      // Build history from messages (exclude the initial greeting)
+      const history = messages
+        .slice(1) // skip initial greeting
+        .concat(userMsg)
+        .map((m) => ({
+          role: m.role === 'assistant' ? 'assistant' : 'user',
+          content: m.content,
+        }));
+
       const res = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ message: userMsg.content }),
+        body: JSON.stringify({
+          message: userMsg.content,
+          history,
+        }),
       });
 
       const data = await res.json();
@@ -60,8 +62,9 @@ export default function ChatInterface({ token, onNewRule }) {
         },
       ]);
 
-      if (data.rule && onNewRule) {
-        onNewRule(data.rule);
+      // If a new rule was created, refresh rules list
+      if ((data.rule || data.action?.rule) && onNewRule) {
+        onNewRule(data.rule || data.action.rule);
       }
     } catch {
       setMessages((prev) => [
@@ -106,19 +109,22 @@ export default function ChatInterface({ token, onNewRule }) {
           {sending && (
             <div className="flex justify-start">
               <div className="liquid-glass px-4 py-3 rounded-2xl rounded-bl-md text-sm text-fafnir-muted relative z-10">
-                <span className="inline-flex gap-1">
-                  <span
-                    className="w-1.5 h-1.5 bg-fafnir-muted rounded-full animate-bounce"
-                    style={{ animationDelay: '0ms' }}
-                  />
-                  <span
-                    className="w-1.5 h-1.5 bg-fafnir-muted rounded-full animate-bounce"
-                    style={{ animationDelay: '150ms' }}
-                  />
-                  <span
-                    className="w-1.5 h-1.5 bg-fafnir-muted rounded-full animate-bounce"
-                    style={{ animationDelay: '300ms' }}
-                  />
+                <span className="inline-flex items-center gap-2">
+                  Fafnir is thinking
+                  <span className="inline-flex gap-1">
+                    <span
+                      className="w-1.5 h-1.5 bg-fafnir-muted rounded-full animate-bounce"
+                      style={{ animationDelay: '0ms' }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 bg-fafnir-muted rounded-full animate-bounce"
+                      style={{ animationDelay: '150ms' }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 bg-fafnir-muted rounded-full animate-bounce"
+                      style={{ animationDelay: '300ms' }}
+                    />
+                  </span>
                 </span>
               </div>
             </div>

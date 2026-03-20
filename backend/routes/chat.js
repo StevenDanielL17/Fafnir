@@ -12,21 +12,23 @@ const express = require('express');
 const router = express.Router();
 
 const { requireAuth } = require('./auth');
-const langchainAgent = require('../services/langchainAgent');
 const agentService = require('../services/agentService');
 const ruleModel = require('../models/rule');
 const transactionModel = require('../models/transaction');
 const userModel = require('../models/user');
 const hederaService = require('../services/hederaService');
-const notificationService = require('../services/notificationService');
+const { validate, chatSchema } = require('../middleware/validation');
+const { chatLimiter } = require('../middleware/rateLimiter');
 
 // All chat routes require authentication
 router.use(requireAuth);
 
 // ── POST /api/chat ─────────────────────────────────────
-router.post('/', async (req, res) => {
+// Input validation: message length, format
+// Rate limiting: max 100 messages per hour per user
+router.post('/', chatLimiter, validate(chatSchema), async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, history } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: 'message is required' });
@@ -37,41 +39,66 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Build user context for the LLM
-    const activeRules = ruleModel.getByUserId(req.userId);
-    const recentTransactions = transactionModel.getByUserId(req.userId, { limit: 10 });
-    const monthlyTotal = transactionModel.getMonthlyTotal(req.userId);
+    // Build user context
+    const activeRules = ruleModel.getByUserId(req.userId).filter(r => r.isActive);
+    const recentTransactions = transactionModel.getByUserId(req.userId, { limit: 5 });
+    const monthSaved = transactionModel.getMonthlyTotal(req.userId);
     const totalSaved = transactionModel.getTotalSaved(req.userId);
-
-    let balance = null;
-    try {
-      if (user.hederaAccountId) {
-        balance = await hederaService.getBalance(user.hederaAccountId);
-      }
-    } catch {
-      // Balance check may fail if account doesn't exist yet
-    }
 
     const userContext = {
       totalSaved,
-      monthlyTotal,
-      balance,
+      monthSaved,
       activeRules,
       recentTransactions,
     };
 
-    // Get LLM response
-    const { reply, action } = await langchainAgent.chat(message, userContext);
+    let createdRule = null;
 
-    // Process any actions the LLM decided to take
-    let actionResult = null;
-    if (action) {
-      actionResult = await processAction(action, req.userId, user);
+    const conversationHistory = history || [];
+    const result = await agentService.handleChat(message, conversationHistory, userContext);
+    let reply = result.reply;
+
+    if (result.action === 'create_rule' && result.rule) {
+      try {
+        createdRule = ruleModel.create(req.userId, {
+          description: result.rule.description || message,
+          triggerType: result.rule.trigger_type || 'scheduled',
+          triggerValue: result.rule.trigger_value || 'daily',
+          amount: result.rule.amount,
+          maxPerTransaction: result.rule.max_per_transaction || result.rule.amount,
+          monthlyMax: result.rule.monthly_max || result.rule.amount * 10,
+          isActive: true,
+        });
+
+        reply = `${reply}\n\n✓ Rule saved and active.`;
+
+        // Log rule creation to HCS (fire-and-forget)
+        if (user.hcsTopicId) {
+          hederaService.logToHCS(user.hcsTopicId, {
+            event: 'RULE_CREATED',
+            rule: result.rule.description || message,
+            source: 'chat',
+          }).catch(() => {});
+        }
+      } catch (err) {
+        console.error('  Auto-create rule from chat failed:', err.message);
+      }
+    }
+
+    // Log chat to HCS (fire-and-forget)
+    if (user.hcsTopicId) {
+      hederaService.logToHCS(user.hcsTopicId, {
+        event: 'CHAT',
+        userMessage: message,
+      }).catch(() => {});
     }
 
     res.json({
       reply,
-      action: actionResult,
+      rule: createdRule || null,
+      action: createdRule
+        ? { type: 'goal_created', rule: createdRule }
+        : (result.action ? { type: result.action } : null),
     });
   } catch (err) {
     console.error('Chat error:', err.message);

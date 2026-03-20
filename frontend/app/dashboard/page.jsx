@@ -61,10 +61,10 @@ export default function DashboardPage() {
           <TotalSavings transactions={transactions} />
         </div>
         <div className="md:col-span-4">
-          <ActiveRule rules={rules} />
+          <ActiveRule rules={rules} token={token} />
         </div>
         <div className="md:col-span-4">
-          <AgentStatus />
+          <AgentStatus transactions={transactions} rules={rules} />
         </div>
       </div>
 

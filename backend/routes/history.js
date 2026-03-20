@@ -13,6 +13,8 @@ const { requireAuth } = require('./auth');
 const transactionModel = require('../models/transaction');
 const notificationService = require('../services/notificationService');
 const schedulerService = require('../services/schedulerService');
+const auditService = require('../services/auditService');
+const { agentTriggerLimiter } = require('../middleware/rateLimiter');
 
 // All history routes require authentication
 router.use(requireAuth);
@@ -51,11 +53,21 @@ router.get('/notifications', async (req, res) => {
 
 // ── POST /api/history/trigger ──────────────────────────
 // For demo/testing: manually trigger the agent cycle
-router.post('/trigger', async (req, res) => {
+// Rate limited: max 10 triggers per hour per user
+router.post('/trigger', agentTriggerLimiter, async (req, res) => {
   try {
+    auditService.logAgentEvent(req.userId, 'MANUAL_TRIGGER', {
+      ipAddress: req.ipAddress,
+      timestamp: new Date().toISOString(),
+    });
+
     await schedulerService.triggerNow();
     res.json({ message: 'Agent cycle triggered manually' });
   } catch (err) {
+    auditService.logSecurityEvent('AGENT_TRIGGER_ERROR', req.ipAddress, {
+      error: err.message,
+      userId: req.userId,
+    });
     res.status(500).json({ error: err.message });
   }
 });

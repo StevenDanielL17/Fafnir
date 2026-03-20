@@ -2,19 +2,50 @@
 
 import { useState } from 'react';
 
-export default function ActiveRule({ rules = [] }) {
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+export default function ActiveRule({ rules = [], token }) {
+  const activeRule = rules.find((r) => r.isActive !== false);
   const [paused, setPaused] = useState(false);
+  const [toggling, setToggling] = useState(false);
 
-  const rule = rules.find((r) => r.active !== false) || {
-    goalText: 'Save $5 per meal, $30/month max',
-    trigger: 'food',
-    amountPerTrigger: 5,
-    monthlyLimit: 30,
-  };
+  if (!activeRule) {
+    return (
+      <div className="liquid-glass liquid-glass-hover p-6 h-full relative">
+        <div className="relative z-10">
+          <div className="text-sm text-fafnir-muted mb-3">Active Rule</div>
+          <div className="text-center py-4">
+            <span className="text-2xl mb-2 block">📋</span>
+            <p className="text-sm text-fafnir-muted">No active rules yet. Set a savings goal to get started!</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const spent = 23;
-  const limit = rule.monthlyLimit || 30;
+  const spent = activeRule.monthlyTotal || 0;
+  const limit = activeRule.monthlyMax || 30;
   const pct = Math.min((spent / limit) * 100, 100);
+
+  async function handleToggle() {
+    setToggling(true);
+    try {
+      const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('fafnir_token') : '');
+      await fetch(`${API_URL}/api/goals/${activeRule.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ isActive: paused }), // toggle
+      });
+      setPaused(!paused);
+    } catch (err) {
+      console.error('Toggle failed:', err);
+    } finally {
+      setToggling(false);
+    }
+  }
 
   return (
     <div className="liquid-glass liquid-glass-hover p-6 h-full relative">
@@ -22,11 +53,15 @@ export default function ActiveRule({ rules = [] }) {
         <div className="text-sm text-fafnir-muted mb-3">Active Rule</div>
 
         <div className="flex items-start gap-3 mb-4">
-          <span className="text-2xl">🍔</span>
+          <span className="text-2xl">
+            {activeRule.triggerType === 'spending_category' ? '🍔' : '⏰'}
+          </span>
           <div>
-            <div className="font-medium text-fafnir-text">Food Rule</div>
+            <div className="font-medium text-fafnir-text">
+              {activeRule.description || 'Savings Rule'}
+            </div>
             <div className="text-sm text-fafnir-muted">
-              Save ${rule.amountPerTrigger || 5} per meal, ${limit}/month max
+              Save ${activeRule.amount?.toFixed(2) || '5.00'} per action, ${limit.toFixed(2)}/month max
             </div>
           </div>
         </div>
@@ -34,8 +69,8 @@ export default function ActiveRule({ rules = [] }) {
         {/* Progress */}
         <div className="mb-2">
           <div className="flex justify-between text-xs text-fafnir-muted mb-1">
-            <span>${spent} saved</span>
-            <span>${limit} limit</span>
+            <span>${spent.toFixed(2)} saved</span>
+            <span>${limit.toFixed(2)} limit</span>
           </div>
           <div className="h-2 bg-fafnir-black/50 rounded-full overflow-hidden">
             <div
@@ -46,7 +81,8 @@ export default function ActiveRule({ rules = [] }) {
         </div>
 
         <button
-          onClick={() => setPaused(!paused)}
+          onClick={handleToggle}
+          disabled={toggling}
           className={`mt-3 text-xs px-4 py-1.5 rounded-full transition-all ${
             paused
               ? 'bg-fafnir-green/20 text-fafnir-green hover:bg-fafnir-green/30'

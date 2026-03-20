@@ -46,6 +46,8 @@ function initialize() {
     modelName: 'gpt-4o-mini',
     temperature: 0.2, // Low temp for deterministic financial parsing
     maxTokens: 1024,
+    maxRetries: 0,
+    ...(process.env.OPENAI_BASE_URL ? { configuration: { baseURL: process.env.OPENAI_BASE_URL } } : {}),
   });
 
   // Initialize Hedera Agent Kit toolkit with LangChain

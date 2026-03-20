@@ -10,6 +10,16 @@ export default defineConfig({
     // ── Setup ──────────────────────────────────────────
     setupFiles: ['./setup/globalSetup.js'],
 
+    // ── Test Include Patterns ──────────────────────────
+    include: [
+      'unit/**/*.test.js',
+      'bridge/**/*.test.js',
+      'financial/**/*.test.js',
+      'security/**/*.test.js',
+      'chaos/**/*.test.js',
+      'stress/**/*.test.js',
+    ],
+
     // ── Coverage ───────────────────────────────────────
     coverage: {
       provider: 'v8',
@@ -32,15 +42,6 @@ export default defineConfig({
         lines: 70,
       },
     },
-
-    // ── Test Discovery ─────────────────────────────────
-    include: [
-      'unit/**/*.test.js',
-      'bridge/**/*.test.js',
-      'financial/**/*.test.js',
-      'security/**/*.test.js',
-      'chaos/**/*.test.js',
-    ],
 
     // ── Performance ────────────────────────────────────
     pool: 'forks',          // Isolated processes for financial tests
